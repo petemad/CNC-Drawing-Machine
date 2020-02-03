@@ -1,12 +1,13 @@
 import sys
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from PyQt5.QtCore import Qt
-from UI import Ui_MainWindow
+from drawUI2 import Ui_MainWindow
 import numpy as np
 import pyqtgraph as pg
 from PyQt5.QtWidgets import QMessageBox
 import serial
 from time import sleep
+from math import cos, sin,sqrt
 
 
 class Draw(QtWidgets.QMainWindow):
@@ -22,6 +23,7 @@ class Draw(QtWidgets.QMainWindow):
         self.ui.y2.textChanged.connect(self.read_y2)
         self.ui.pushButton_3.clicked.connect(self.clear)
         self.ui.drawLine.clicked.connect(self.draw_line)
+        self.ui.drawCircle.clicked.connect(self.draw_circle)
 
         self.x1 = 1
         self.x2 = 2
@@ -84,6 +86,15 @@ class Draw(QtWidgets.QMainWindow):
         self.ui.graphicsView.clear()
         self.return_to_origin(self.location[0],self.location[1])
 
+    def draw_circle(self):
+        radius = sqrt(((self.x1-self.x2)**2) + ((self.y1-self.y2)**2))
+        x = []
+        y = []
+        for i in range (360):
+            x.append(radius * cos(i*3.14/180))
+            y.append(radius * sin(i*3.14/180))
+        self.ui.graphicsView.plot(x,y,pen=pg.mkPen(color='g',width=2))
+
     def error(self, message):
         errorBox = QMessageBox()
         errorBox.setIcon(QMessageBox.Warning)
@@ -107,7 +118,7 @@ class Draw(QtWidgets.QMainWindow):
         self.sendData("mu"+str(useY))
         sleep(1.5)
 
-    def return_to_origin(self.x,y):
+    def return_to_origin(x,y):
         self.sendData("pf")
         sleep(0.5)
         self.sendData("ml"+str(x))
@@ -163,7 +174,7 @@ class Draw(QtWidgets.QMainWindow):
         self.return_to_origin(self.location[0],self.location[1])
         
     def draw_line_paper(self,x,y):
-        if location[0] == 0, location[1] == 0 :
+        if location[0] == 0 and location[1] == 0 :
             self.go_from_origin(x,y)
         self.sendData("pn")
         sleep(0.5)
@@ -171,7 +182,7 @@ class Draw(QtWidgets.QMainWindow):
         self.location = [self.location[0] + np.abs(x[1]-x[0]),
                         self.location[1] + np.abs(y[1]-y[2])]
         sleep(0.1)
-        self.sendData("mu"str(np.abs(y[1]-y[2])))        
+        self.sendData("mu"+str(np.abs(y[1]-y[2])))        
 
     def sendData(self, char):
         try :
@@ -180,7 +191,6 @@ class Draw(QtWidgets.QMainWindow):
             s.write(data)
         except :
             sendData(char)
-
 
 def main():
     app = QtWidgets.QApplication(sys.argv)
